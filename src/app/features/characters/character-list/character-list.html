@@ -1,17 +1,18 @@
 <section class="directory" aria-labelledby="directory-title" [attr.aria-busy]="viewStatus() === 'loading'">
-  <header class="page-heading">
-    <h1 id="directory-title">Personajes</h1>
-    <p>Filtra el directorio y abre un personaje para ver su ubicación y episodios.</p>
+  <header class="hero">
+    <p class="eyebrow">Personajes del multiverso</p>
+    <h1 id="directory-title">Directorio Rick y Morty</h1>
+    <p>Busca por nombre, estado o especie y abre una ficha para ver su ubicación y episodios.</p>
   </header>
 
   <form class="filters" role="search" aria-label="Filtrar personajes" (submit)="$event.preventDefault()">
-    <div class="field">
+    <div class="field field-search">
       <label for="character-name">Nombre</label>
       <input
         id="character-name"
         type="search"
         name="name"
-        placeholder="Rick, Morty, Summer…"
+        placeholder="Buscar personaje…"
         [value]="nameDraft()"
         (input)="onNameInput($event)"
       />
@@ -41,7 +42,7 @@
     </div>
 
     @if (hasFilters()) {
-      <button type="button" class="button button-ghost" (click)="clearFilters()">Limpiar</button>
+      <button type="button" class="button button-ghost" (click)="clearFilters()">Limpiar filtros</button>
     }
   </form>
 
@@ -74,45 +75,48 @@
       </div>
     }
     @case ('ready') {
-      <p class="result-count" role="status">{{ pageData()!.info.count }} personajes</p>
-      <ul class="character-grid">
+      <div class="results-bar">
+        <p class="result-count" role="status">{{ pageData()!.info.count }} personajes</p>
+        <div class="layout-toggle" role="group" aria-label="Tipo de vista">
+          <button type="button" [attr.aria-pressed]="layout() === 'grid'" (click)="setLayout('grid')">Cuadrícula</button>
+          <button type="button" [attr.aria-pressed]="layout() === 'list'" (click)="setLayout('list')">Lista</button>
+        </div>
+      </div>
+
+      <ul class="character-grid" [class.is-list]="layout() === 'list'">
         @for (character of pageData()!.results; track character.id) {
           <li>
-            <article class="character-card">
-              <a class="character-card-link" [routerLink]="['/characters', character.id]">
-                <img [src]="character.image" alt="" width="300" height="300" />
-                <h2>{{ character.name }}</h2>
-                <p>
-                  <span class="status" [attr.data-status]="character.status">{{ statusLabel(character.status) }}</span>
-                  · {{ speciesLabel(character.species) }}
-                </p>
-                <p class="card-location">{{ placeLabel(character.location.name) }}</p>
-              </a>
-              <app-favorite-button
-                [characterName]="character.name"
-                [isFavorite]="favoriteState.isFavorite(character.id)"
-                [isPending]="favoriteState.isPending(character.id)"
-                (toggleFavorite)="favoriteState.toggle(character.id)"
-              />
-            </article>
+            <app-character-card [character]="character" />
           </li>
         }
       </ul>
 
-      <nav class="pagination" aria-label="Paginación">
-        <button type="button" class="button" (click)="goToPage(filters().page - 1)" [disabled]="filters().page <= 1">
-          Anterior
-        </button>
-        <p>Página {{ filters().page }} de {{ pageData()!.info.pages }}</p>
-        <button
-          type="button"
-          class="button"
-          (click)="goToPage(filters().page + 1)"
-          [disabled]="filters().page >= pageData()!.info.pages"
-        >
-          Siguiente
-        </button>
-      </nav>
+      <div class="pager">
+        <p>Mostrando {{ rangeStart() }}–{{ rangeEnd() }} de {{ pageData()!.info.count }}</p>
+        <nav class="pagination" aria-label="Paginación">
+          <button type="button" (click)="goToPage(filters().page - 1)" [disabled]="filters().page <= 1">Anterior</button>
+          @for (item of pageItems(); track $index) {
+            @if (item === 'gap') {
+              <span aria-hidden="true">…</span>
+            } @else {
+              <button
+                type="button"
+                [attr.aria-current]="item === filters().page ? 'page' : null"
+                (click)="goToPage(item)"
+              >
+                {{ item }}
+              </button>
+            }
+          }
+          <button
+            type="button"
+            (click)="goToPage(filters().page + 1)"
+            [disabled]="filters().page >= pageData()!.info.pages"
+          >
+            Siguiente
+          </button>
+        </nav>
+      </div>
     }
   }
 </section>

@@ -1,6 +1,4 @@
 <section class="detail" aria-labelledby="detail-title" [attr.aria-busy]="viewStatus() === 'loading'">
-  <a class="back-link" routerLink="/">Volver al directorio</a>
-
   @if (favoriteState.hasLoadError()) {
     <p class="banner" role="status">
       No se pudieron cargar los favoritos.
@@ -19,12 +17,19 @@
       <div class="state-panel" role="alert">
         <h1 id="detail-title">Personaje</h1>
         <p>{{ errorMessage() }}</p>
+        <a class="button button-ghost" routerLink="/">Volver al directorio</a>
         <button type="button" class="button" (click)="reload()">Reintentar</button>
       </div>
     }
     @case ('ready') {
       @if (character(); as current) {
-        <article class="detail-layout">
+        <nav class="breadcrumb" aria-label="Ruta">
+          <a routerLink="/">Personajes</a>
+          <span aria-hidden="true">/</span>
+          <span>{{ current.name }}</span>
+        </nav>
+
+        <article class="detail-hero">
           <img
             class="detail-portrait"
             [src]="current.image"
@@ -33,20 +38,36 @@
             height="300"
           />
           <div class="detail-summary">
-            <p class="eyebrow">Personaje</p>
+            <p class="eyebrow">Personaje #{{ characterCode(current.id) }}</p>
             <h1 id="detail-title">{{ current.name }}</h1>
-            <app-favorite-button
-              [characterName]="current.name"
-              [isFavorite]="favoriteState.isFavorite(current.id)"
-              [isPending]="favoriteState.isPending(current.id)"
-              (toggleFavorite)="favoriteState.toggle(current.id)"
-            />
+            <ul class="chips">
+              <li class="status" [attr.data-status]="current.status">{{ statusLabel(current.status) }}</li>
+              <li>{{ speciesLabel(current.species) }}</li>
+              <li>{{ genderLabel(current.gender) }}</li>
+            </ul>
+            <p class="summary">{{ summary(current) }}</p>
+            <div class="detail-actions">
+              <app-favorite-button
+                variant="text"
+                [characterName]="current.name"
+                [isFavorite]="favoriteState.isFavorite(current.id)"
+                [isPending]="favoriteState.isPending(current.id)"
+                (toggleFavorite)="favoriteState.toggle(current.id)"
+              />
+              <button type="button" class="button button-ghost" (click)="share(current)">
+                {{ copied() ? 'Enlace copiado' : 'Compartir' }}
+              </button>
+            </div>
+          </div>
+        </article>
+
+        <div class="relations">
+          <section class="relation-card" aria-labelledby="facts-heading">
+            <h2 id="facts-heading">Información general</h2>
             <dl class="facts">
               <div>
                 <dt>Estado</dt>
-                <dd>
-                  <span class="status" [attr.data-status]="current.status">{{ statusLabel(current.status) }}</span>
-                </dd>
+                <dd class="status" [attr.data-status]="current.status">{{ statusLabel(current.status) }}</dd>
               </div>
               <div>
                 <dt>Especie</dt>
@@ -67,42 +88,69 @@
                 <dd>{{ placeLabel(current.origin.name) }}</dd>
               </div>
             </dl>
-          </div>
-        </article>
+          </section>
 
-        <div class="relations">
           <section class="relation-card" aria-labelledby="location-heading">
             <h2 id="location-heading">Ubicación</h2>
             <p class="relation-title">{{ placeLabel(location()?.name ?? current.location.name) }}</p>
             @if (location(); as place) {
-              <p>{{ place.type || 'Tipo no registrado' }} · {{ placeLabel(place.dimension) }}</p>
-              <p>{{ place.residents.length }} residentes</p>
+              <dl class="location-stats">
+                <div>
+                  <dt>Tipo</dt>
+                  <dd>{{ place.type || 'No registrado' }}</dd>
+                </div>
+                <div>
+                  <dt>Dimensión</dt>
+                  <dd>{{ placeLabel(place.dimension) }}</dd>
+                </div>
+                <div>
+                  <dt>Residentes</dt>
+                  <dd>{{ place.residents.length }}</dd>
+                </div>
+              </dl>
             } @else if (current.location.url) {
               <p>No se pudo cargar el detalle de la ubicación.</p>
             }
           </section>
 
-          <section class="relation-card" aria-labelledby="episodes-heading">
-            <h2 id="episodes-heading">Episodios</h2>
+          <section class="relation-card episode-card" aria-labelledby="episodes-heading">
+            <div class="section-heading">
+              <h2 id="episodes-heading">Apariciones</h2>
+              <p>{{ current.episode.length }} episodios</p>
+            </div>
             @if (episodesMissing()) {
               <p role="status">No se pudieron cargar los episodios relacionados.</p>
             } @else if (episodes().length === 0) {
               <p>Este personaje no tiene episodios registrados.</p>
             } @else {
               <ul class="episode-list">
-                @for (episode of episodes(); track episode.id) {
+                @for (episode of visibleEpisodes(); track episode.id) {
                   <li class="episode-row">
                     <span class="episode-code">{{ episode.episode }}</span>
                     <span>
                       <span class="episode-name">{{ episode.name }}</span>
-                      <span class="episode-date">{{ episode.air_date }}</span>
+                      <span class="episode-date">{{ formatAirDate(episode.air_date) }}</span>
                     </span>
                   </li>
                 }
               </ul>
+              @if (episodes().length > 5) {
+                <button type="button" class="button button-ghost" (click)="showAllEpisodes.set(!showAllEpisodes())">
+                  {{ showAllEpisodes() ? 'Ver menos' : 'Ver los ' + episodes().length + ' episodios' }}
+                </button>
+              }
             }
           </section>
         </div>
+
+        <nav class="neighbor-nav" aria-label="Personajes contiguos">
+          @if (previousId(); as id) {
+            <a [routerLink]="['/characters', id]">Anterior</a>
+          }
+          @if (nextId(); as id) {
+            <a [routerLink]="['/characters', id]">Siguiente</a>
+          }
+        </nav>
       }
     }
   }

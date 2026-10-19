@@ -1,0 +1,44 @@
+<section class="directory" aria-labelledby="favorites-title" [attr.aria-busy]="viewStatus() === 'loading'">
+  <header class="page-heading">
+    <p class="eyebrow">Tu selección</p>
+    <h1 id="favorites-title">Favoritos</h1>
+    <p>Los personajes que marques se guardan en Firestore y aparecen aquí.</p>
+  </header>
+
+  @if (favoriteState.toggleError()) {
+    <p class="banner" role="alert">{{ favoriteState.toggleError() }}</p>
+  }
+
+  @switch (viewStatus()) {
+    @case ('loading') {
+      <p class="state-panel" role="status">Cargando favoritos…</p>
+    }
+    @case ('error') {
+      <div class="state-panel" role="alert">
+        <p>No se pudieron cargar los personajes favoritos.</p>
+        <button type="button" class="button" (click)="reload()">Reintentar</button>
+      </div>
+    }
+    @case ('empty') {
+      <div class="state-panel" role="status">
+        <p>Todavía no hay favoritos.</p>
+        <a class="button" routerLink="/">Ver personajes</a>
+      </div>
+    }
+    @case ('missing') {
+      <div class="state-panel" role="status">
+        <p>Hay favoritos guardados, pero no están entre los 20 personajes del catálogo.</p>
+        <a class="button" routerLink="/">Ver personajes</a>
+      </div>
+    }
+    @case ('ready') {
+      <ul class="character-grid">
+        @for (character of characters(); track character.id) {
+          <li>
+            <app-character-card [character]="character" />
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

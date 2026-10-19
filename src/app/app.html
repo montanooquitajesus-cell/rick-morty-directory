@@ -2,11 +2,17 @@
   <header class="site-header">
     <a class="brand" routerLink="/">
       <span class="brand-mark" aria-hidden="true"></span>
-      <span>
-        <span class="brand-title">Directorio Rick y Morty</span>
-        <span class="brand-subtitle">Personajes, episodios y ubicaciones</span>
-      </span>
+      <span class="brand-title">Directorio</span>
     </a>
+    <nav class="site-nav" aria-label="Secciones">
+      <a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Personajes</a>
+      <a routerLink="/favorites" routerLinkActive="is-active">
+        Favoritos
+        @if (favorites.ids().size > 0) {
+          <span class="nav-count">{{ favorites.ids().size }}</span>
+        }
+      </a>
+    </nav>
   </header>
 
   <main class="site-main">
@@ -14,7 +20,6 @@
   </main>
 
   <footer class="site-footer">
-    Datos de
-    <a href="https://rickandmortyapi.com" target="_blank" rel="noopener">The Rick and Morty API</a>
+    Catálogo guardado en Firestore.
   </footer>
 </div>

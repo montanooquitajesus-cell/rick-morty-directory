@@ -50,6 +50,16 @@ export function placeLabel(name: string): string {
   return name.toLowerCase() === 'unknown' ? 'Desconocido' : name;
 }
 
+export function formatAirDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat('es', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+}
+
 export function isKnownSpecies(species: string): boolean {
   return SPECIES_OPTIONS.some((option) => option.value === species);
 }

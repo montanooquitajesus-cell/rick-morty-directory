@@ -5,7 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
   Subject,
   catchError,
-  forkJoin,
+  from,
   map,
   merge,
   of,
@@ -16,11 +16,9 @@ import {
 import { Character } from '../../../core/models/character';
 import { Episode } from '../../../core/models/episode';
 import { Location } from '../../../core/models/location';
-import { genderLabel, placeLabel, speciesLabel, statusLabel } from '../../../core/models/labels';
-import { RickMortyService } from '../../../core/services/rick-morty';
+import { formatAirDate, genderLabel, placeLabel, speciesLabel, statusLabel } from '../../../core/models/labels';
+import { CatalogService } from '../../../core/services/catalog';
 import { FavoritesState } from '../../../core/state/favorites-state';
-import { isNotFound } from '../../../core/utils/http-errors';
-import { resourceId } from '../../../core/utils/resource-id';
 import { FavoriteButton } from '../../../shared/favorite-button/favorite-button';
 
 type DetailView = 'loading' | 'ready' | 'error';
@@ -37,6 +35,11 @@ export class CharacterDetail {
   protected readonly speciesLabel = speciesLabel;
   protected readonly genderLabel = genderLabel;
   protected readonly placeLabel = placeLabel;
+  protected readonly formatAirDate = formatAirDate;
+  protected readonly showAllEpisodes = signal(false);
+  protected readonly copied = signal(false);
+  protected readonly previousId = signal<number | null>(null);
+  protected readonly nextId = signal<number | null>(null);
 
   protected readonly viewStatus = signal<DetailView>('loading');
   protected readonly errorMessage = signal('');
@@ -45,7 +48,7 @@ export class CharacterDetail {
   protected readonly location = signal<Location | null>(null);
   protected readonly episodesMissing = signal(false);
 
-  private readonly api = inject(RickMortyService);
+  private readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
   private readonly title = inject(Title);
   private readonly reload$ = new Subject<void>();
@@ -65,6 +68,10 @@ export class CharacterDetail {
           this.episodes.set([]);
           this.location.set(null);
           this.episodesMissing.set(false);
+          this.showAllEpisodes.set(false);
+          this.copied.set(false);
+          this.previousId.set(null);
+          this.nextId.set(null);
           this.errorMessage.set('');
         }),
         switchMap((id) => this.loadDetail(id)),
@@ -81,6 +88,8 @@ export class CharacterDetail {
         this.character.set(result.character);
         this.episodes.set(result.episodes);
         this.location.set(result.location);
+        this.previousId.set(result.previousId);
+        this.nextId.set(result.nextId);
         this.episodesMissing.set(result.episodesMissing);
         this.viewStatus.set('ready');
         this.title.setTitle(`${result.character.name} | Directorio Rick y Morty`);
@@ -95,43 +104,62 @@ export class CharacterDetail {
     void this.favoriteState.retry();
   }
 
+  protected visibleEpisodes(): Episode[] {
+    const episodes = this.episodes();
+    return this.showAllEpisodes() ? episodes : episodes.slice(0, 5);
+  }
+
+  protected characterCode(id: number): string {
+    return String(id).padStart(3, '0');
+  }
+
+  protected summary(character: Character): string {
+    const appearances = character.episode.length;
+    const episodeText = appearances === 1 ? '1 episodio' : `${appearances} episodios`;
+    return `Ubicación registrada: ${placeLabel(character.location.name)}. Aparece en ${episodeText}.`;
+  }
+
+  protected async share(character: Character): Promise<void> {
+    const url = `${location.origin}/characters/${character.id}`;
+    this.copied.set(false);
+
+    if (typeof navigator.share === 'function') {
+      try {
+        await navigator.share({ title: character.name, url });
+        return;
+      } catch {
+        return;
+      }
+    }
+
+    await navigator.clipboard.writeText(url);
+    this.copied.set(true);
+  }
+
   private loadDetail(id: number) {
     if (!Number.isInteger(id) || id < 1) {
       return of({ kind: 'error' as const, message: 'El identificador del personaje no es válido.' });
     }
 
-    return this.api.getCharacter(id).pipe(
-      switchMap((character) => this.loadRelations(character)),
-      catchError((error: unknown) => of({
+    return from(this.catalog.getDetail(id)).pipe(
+      map((detail) => {
+        if (!detail) {
+          return { kind: 'error' as const, message: 'No encontramos ese personaje en el catálogo.' };
+        }
+
+        return {
+          kind: 'ready' as const,
+          character: detail.character,
+          episodes: detail.episodes,
+          episodesMissing: false,
+          location: detail.location,
+          previousId: detail.previousId,
+          nextId: detail.nextId,
+        };
+      }),
+      catchError(() => of({
         kind: 'error' as const,
-        message: isNotFound(error)
-          ? 'No encontramos ese personaje.'
-          : 'No se pudo cargar el personaje. Revisa tu conexión e inténtalo de nuevo.',
-      })),
-    );
-  }
-
-  private loadRelations(character: Character) {
-    const episodeIds = character.episode
-      .map((url) => resourceId(url))
-      .filter((episodeId): episodeId is number => episodeId !== null);
-    const locationId = resourceId(character.location.url);
-
-    return forkJoin({
-      episodes: this.api.getEpisodes(episodeIds).pipe(
-        map((episodes) => ({ episodes, failed: false })),
-        catchError(() => of({ episodes: [] as Episode[], failed: episodeIds.length > 0 })),
-      ),
-      location: locationId === null
-        ? of(null)
-        : this.api.getLocation(locationId).pipe(catchError(() => of(null))),
-    }).pipe(
-      map(({ episodes, location }) => ({
-        kind: 'ready' as const,
-        character,
-        episodes: episodes.episodes,
-        episodesMissing: episodes.failed,
-        location,
+        message: 'No se pudo cargar el personaje desde Firestore. Revisa tu conexión e inténtalo de nuevo.',
       })),
     );
   }

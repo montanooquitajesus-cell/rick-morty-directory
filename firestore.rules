@@ -2,8 +2,6 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Directorio público sin cuentas. Solo la colección de favoritos
-    // acepta lecturas y escrituras, y cada documento debe cumplir el esquema.
     match /favorites/{characterId} {
       allow read: if true;
       allow create, update: if isValidFavorite(characterId);
@@ -20,6 +18,11 @@ service cloud.firestore {
           && request.resource.data.createdAt is number
           && request.resource.data.createdAt > 0;
       }
+    }
+
+    match /characters/{characterId} {
+      allow read: if true;
+      allow write: if false;
     }
   }
 }

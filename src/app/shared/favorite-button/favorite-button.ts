@@ -9,6 +9,7 @@ export class FavoriteButton {
   readonly isFavorite = input(false);
   readonly isPending = input(false);
   readonly characterName = input.required<string>();
+  readonly variant = input<'icon' | 'text'>('icon');
   readonly toggleFavorite = output<void>();
 
   protected readonly label = computed(() => {
@@ -18,6 +19,10 @@ export class FavoriteButton {
       ? `Quitar a ${name} de favoritos`
       : `Guardar a ${name} en favoritos`;
   });
+
+  protected readonly caption = computed(() =>
+    this.isFavorite() ? 'En favoritos' : 'Añadir a favoritos',
+  );
 
   protected onClick(): void {
     this.toggleFavorite.emit();

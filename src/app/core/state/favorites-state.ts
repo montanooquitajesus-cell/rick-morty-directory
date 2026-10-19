@@ -9,6 +9,7 @@ export class FavoritesState {
   readonly ids = signal<ReadonlySet<string>>(new Set());
   readonly pendingIds = signal<ReadonlySet<string>>(new Set());
   readonly hasLoadError = signal(false);
+  readonly hasLoaded = signal(false);
   readonly toggleError = signal('');
 
   load(): Promise<void> {
@@ -55,8 +56,10 @@ export class FavoritesState {
       const ids = await this.favorites.getAll();
       this.ids.set(new Set(ids));
       this.hasLoadError.set(false);
+      this.hasLoaded.set(true);
     } catch {
       this.hasLoadError.set(true);
+      this.hasLoaded.set(true);
       this.loadPromise = null;
     }
   }

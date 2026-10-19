@@ -1,0 +1,22 @@
+<article class="character-card">
+  <a class="character-card-media" [routerLink]="['/characters', character().id]">
+    <img [src]="character().image" alt="" width="300" height="300" />
+  </a>
+  <app-favorite-button
+    variant="icon"
+    [characterName]="character().name"
+    [isFavorite]="favorites.isFavorite(character().id)"
+    [isPending]="favorites.isPending(character().id)"
+    (toggleFavorite)="favorites.toggle(character().id)"
+  />
+  <div class="character-card-body">
+    <h2>
+      <a [routerLink]="['/characters', character().id]">{{ character().name }}</a>
+    </h2>
+    <p>
+      <span class="status-dot" [attr.data-status]="character().status"></span>
+      {{ statusLabel(character().status) }} · {{ speciesLabel(character().species) }}
+    </p>
+    <p class="card-location">{{ placeLabel(character().location.name) }}</p>
+  </div>
+</article>

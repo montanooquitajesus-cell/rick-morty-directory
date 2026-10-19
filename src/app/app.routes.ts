@@ -9,6 +9,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'favorites',
+    loadComponent: () =>
+      import('./features/characters/favorite-list/favorite-list').then(
+        (module) => module.FavoriteList,
+      ),
+  },
+  {
     path: 'characters/:id',
     loadComponent: () =>
       import('./features/characters/character-detail/character-detail').then(

@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import {
   Observable,
   Subject,
@@ -18,26 +18,18 @@ import {
   take,
   tap,
 } from 'rxjs';
-import { CharacterPage, EMPTY_CHARACTER_PAGE } from '../../../core/models/character';
+import { CharacterPage } from '../../../core/models/character';
 import { CharacterQuery, characterQueryFromParams } from '../../../core/models/character-query';
-import {
-  SPECIES_OPTIONS,
-  STATUS_OPTIONS,
-  isKnownSpecies,
-  placeLabel,
-  speciesLabel,
-  statusLabel,
-} from '../../../core/models/labels';
-import { RickMortyService } from '../../../core/services/rick-morty';
+import { SPECIES_OPTIONS, STATUS_OPTIONS, isKnownSpecies } from '../../../core/models/labels';
+import { CatalogService } from '../../../core/services/catalog';
 import { FavoritesState } from '../../../core/state/favorites-state';
-import { isNotFound } from '../../../core/utils/http-errors';
-import { FavoriteButton } from '../../../shared/favorite-button/favorite-button';
+import { CharacterCard } from '../../../shared/character-card/character-card';
 
 type ListView = 'loading' | 'ready' | 'empty' | 'error';
 
 @Component({
   selector: 'app-character-list',
-  imports: [RouterLink, FavoriteButton],
+  imports: [CharacterCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './character-list.html',
 })
@@ -45,9 +37,6 @@ export class CharacterList {
   protected readonly favoriteState = inject(FavoritesState);
   protected readonly statusOptions = STATUS_OPTIONS;
   protected readonly speciesOptions = SPECIES_OPTIONS;
-  protected readonly statusLabel = statusLabel;
-  protected readonly speciesLabel = speciesLabel;
-  protected readonly placeLabel = placeLabel;
   protected readonly isKnownSpecies = isKnownSpecies;
 
   protected readonly nameDraft = signal('');
@@ -60,8 +49,9 @@ export class CharacterList {
   protected readonly pageData = signal<CharacterPage | null>(null);
   protected readonly viewStatus = signal<ListView>('loading');
   protected readonly errorMessage = signal('');
+  protected readonly layout = signal<'grid' | 'list'>('grid');
 
-  private readonly api = inject(RickMortyService);
+  private readonly catalog = inject(CatalogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly title = inject(Title);
@@ -107,12 +97,9 @@ export class CharacterList {
       .pipe(
         map((params) => characterQueryFromParams(params)),
         tap((query) => this.applyQuery(query)),
-        switchMap((query) => this.api.getCharacters(query).pipe(
+        switchMap((query) => from(this.catalog.query(query)).pipe(
           map((page): ListResult => ({ kind: 'page', page })),
-          catchError((error: unknown): Observable<ListResult> => {
-            if (isNotFound(error)) return of({ kind: 'page', page: EMPTY_CHARACTER_PAGE });
-            return of({ kind: 'error', error });
-          }),
+          catchError((error: unknown): Observable<ListResult> => of({ kind: 'error', error })),
         )),
         takeUntilDestroyed(),
       )
@@ -164,8 +151,37 @@ export class CharacterList {
 
   protected goToPage(page: number): void {
     const total = this.pageData()?.info.pages ?? 1;
-    if (page < 1 || page > total) return;
+    if (page < 1 || page > total || page === this.filters().page) return;
     this.queueQuery({ page });
+  }
+
+  protected setLayout(layout: 'grid' | 'list'): void {
+    this.layout.set(layout);
+  }
+
+  protected pageItems(): Array<number | 'gap'> {
+    const total = this.pageData()?.info.pages ?? 1;
+    const current = this.filters().page;
+    if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
+
+    const items: Array<number | 'gap'> = [1];
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    if (start > 2) items.push('gap');
+    for (let page = start; page <= end; page += 1) items.push(page);
+    if (end < total - 1) items.push('gap');
+    items.push(total);
+    return items;
+  }
+
+  protected rangeStart(): number {
+    const count = this.pageData()?.results.length ?? 0;
+    if (count === 0) return 0;
+    return (this.filters().page - 1) * 20 + 1;
+  }
+
+  protected rangeEnd(): number {
+    return this.rangeStart() + (this.pageData()?.results.length ?? 1) - 1;
   }
 
   protected reload(): void {
