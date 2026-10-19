@@ -1,0 +1,12 @@
+<button
+  type="button"
+  class="favorite-button"
+  [class.is-active]="isFavorite()"
+  [attr.aria-pressed]="isFavorite()"
+  [attr.aria-label]="label()"
+  [disabled]="isPending()"
+  (click)="onClick()"
+>
+  <span aria-hidden="true">{{ isFavorite() ? '★' : '☆' }}</span>
+  <span>{{ isFavorite() ? 'En favoritos' : 'Favorito' }}</span>
+</button>

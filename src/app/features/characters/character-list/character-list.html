@@ -1,0 +1,118 @@
+<section class="directory" aria-labelledby="directory-title" [attr.aria-busy]="viewStatus() === 'loading'">
+  <header class="page-heading">
+    <h1 id="directory-title">Personajes</h1>
+    <p>Filtra el directorio y abre un personaje para ver su ubicación y episodios.</p>
+  </header>
+
+  <form class="filters" role="search" aria-label="Filtrar personajes" (submit)="$event.preventDefault()">
+    <div class="field">
+      <label for="character-name">Nombre</label>
+      <input
+        id="character-name"
+        type="search"
+        name="name"
+        placeholder="Rick, Morty, Summer…"
+        [value]="nameDraft()"
+        (input)="onNameInput($event)"
+      />
+    </div>
+
+    <div class="field">
+      <label for="character-status">Estado</label>
+      <select id="character-status" name="status" (change)="onStatusChange($event)">
+        <option value="" [selected]="filters().status === ''">Todos</option>
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value" [selected]="filters().status === option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="character-species">Especie</label>
+      <select id="character-species" name="species" (change)="onSpeciesChange($event)">
+        <option value="" [selected]="filters().species === ''">Todas</option>
+        @if (filters().species && !isKnownSpecies(filters().species)) {
+          <option [value]="filters().species" selected>{{ filters().species }}</option>
+        }
+        @for (option of speciesOptions; track option.value) {
+          <option [value]="option.value" [selected]="filters().species === option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    @if (hasFilters()) {
+      <button type="button" class="button button-ghost" (click)="clearFilters()">Limpiar</button>
+    }
+  </form>
+
+  @if (favoriteState.hasLoadError()) {
+    <p class="banner" role="status">
+      No se pudieron cargar los favoritos. El directorio sigue disponible.
+      <button type="button" (click)="retryFavorites()">Reintentar</button>
+    </p>
+  }
+  @if (favoriteState.toggleError()) {
+    <p class="banner" role="alert">{{ favoriteState.toggleError() }}</p>
+  }
+
+  @switch (viewStatus()) {
+    @case ('loading') {
+      <p class="state-panel" role="status">Cargando personajes…</p>
+    }
+    @case ('error') {
+      <div class="state-panel" role="alert">
+        <p>{{ errorMessage() }}</p>
+        <button type="button" class="button" (click)="reload()">Reintentar</button>
+      </div>
+    }
+    @case ('empty') {
+      <div class="state-panel" role="status">
+        <p>Ningún personaje coincide con esos filtros.</p>
+        @if (hasFilters()) {
+          <button type="button" class="button" (click)="clearFilters()">Limpiar filtros</button>
+        }
+      </div>
+    }
+    @case ('ready') {
+      <p class="result-count" role="status">{{ pageData()!.info.count }} personajes</p>
+      <ul class="character-grid">
+        @for (character of pageData()!.results; track character.id) {
+          <li>
+            <article class="character-card">
+              <a class="character-card-link" [routerLink]="['/characters', character.id]">
+                <img [src]="character.image" alt="" width="300" height="300" />
+                <h2>{{ character.name }}</h2>
+                <p>
+                  <span class="status" [attr.data-status]="character.status">{{ statusLabel(character.status) }}</span>
+                  · {{ speciesLabel(character.species) }}
+                </p>
+                <p class="card-location">{{ placeLabel(character.location.name) }}</p>
+              </a>
+              <app-favorite-button
+                [characterName]="character.name"
+                [isFavorite]="favoriteState.isFavorite(character.id)"
+                [isPending]="favoriteState.isPending(character.id)"
+                (toggleFavorite)="favoriteState.toggle(character.id)"
+              />
+            </article>
+          </li>
+        }
+      </ul>
+
+      <nav class="pagination" aria-label="Paginación">
+        <button type="button" class="button" (click)="goToPage(filters().page - 1)" [disabled]="filters().page <= 1">
+          Anterior
+        </button>
+        <p>Página {{ filters().page }} de {{ pageData()!.info.pages }}</p>
+        <button
+          type="button"
+          class="button"
+          (click)="goToPage(filters().page + 1)"
+          [disabled]="filters().page >= pageData()!.info.pages"
+        >
+          Siguiente
+        </button>
+      </nav>
+    }
+  }
+</section>
