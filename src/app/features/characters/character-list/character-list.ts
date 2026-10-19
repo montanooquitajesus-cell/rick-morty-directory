@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -27,6 +27,8 @@ import { CharacterCard } from '../../../shared/character-card/character-card';
 
 type ListView = 'loading' | 'ready' | 'empty' | 'error';
 
+const VISIBLE_STEP = 10;
+
 @Component({
   selector: 'app-character-list',
   imports: [CharacterCard],
@@ -47,6 +49,14 @@ export class CharacterList {
     page: 1,
   });
   protected readonly pageData = signal<CharacterPage | null>(null);
+  protected readonly visibleCount = signal(VISIBLE_STEP);
+  protected readonly visibleCharacters = computed(() =>
+    (this.pageData()?.results ?? []).slice(0, this.visibleCount()),
+  );
+  protected readonly hasMore = computed(() => {
+    const total = this.pageData()?.results.length ?? 0;
+    return this.visibleCount() < total;
+  });
   protected readonly viewStatus = signal<ListView>('loading');
   protected readonly errorMessage = signal('');
   protected readonly layout = signal<'grid' | 'list'>('grid');
@@ -59,11 +69,41 @@ export class CharacterList {
   private readonly immediateName = new Subject<string>();
   private readonly queryUpdates = new Subject<Partial<CharacterQuery>>();
   private readonly reload$ = new Subject<void>();
+  private readonly loadMoreAnchor = viewChild<ElementRef<HTMLButtonElement>>('loadMore');
+  private readonly destroyRef = inject(DestroyRef);
   private nameEditInFlight = false;
+  private hasAppliedQuery = false;
+  private nearEnd = false;
+  private scrollMark = 0;
 
   constructor() {
     this.title.setTitle('Personajes | Directorio Rick y Morty');
     void this.favoriteState.load();
+
+    const onWindowScroll = () => {
+      if (!this.nearEnd || window.scrollY < this.scrollMark + 48) return;
+      this.showMore();
+    };
+    window.addEventListener('scroll', onWindowScroll, { passive: true });
+    this.destroyRef.onDestroy(() => window.removeEventListener('scroll', onWindowScroll));
+
+    effect((onCleanup) => {
+      const element = this.loadMoreAnchor()?.nativeElement;
+      if (!element) {
+        this.nearEnd = false;
+        return;
+      }
+
+      const observer = new IntersectionObserver((entries) => {
+        this.nearEnd = entries.some((entry) => entry.isIntersecting);
+        if (this.nearEnd && window.scrollY >= this.scrollMark + 48) this.showMore();
+      });
+      observer.observe(element);
+      onCleanup(() => {
+        observer.disconnect();
+        this.nearEnd = false;
+      });
+    });
 
     merge(
       this.nameChanges.pipe(debounceTime(300)),
@@ -82,7 +122,6 @@ export class CharacterList {
               name: next.name || null,
               status: next.status || null,
               species: next.species || null,
-              page: next.page > 1 ? next.page : null,
             },
           }));
         }),
@@ -149,39 +188,15 @@ export class CharacterList {
     this.queueQuery({ status: '', species: '', page: 1 });
   }
 
-  protected goToPage(page: number): void {
-    const total = this.pageData()?.info.pages ?? 1;
-    if (page < 1 || page > total || page === this.filters().page) return;
-    this.queueQuery({ page });
+  protected showMore(): void {
+    const total = this.pageData()?.results.length ?? 0;
+    if (this.visibleCount() >= total) return;
+    this.visibleCount.update((count) => Math.min(count + VISIBLE_STEP, total));
+    this.scrollMark = window.scrollY;
   }
 
   protected setLayout(layout: 'grid' | 'list'): void {
     this.layout.set(layout);
-  }
-
-  protected pageItems(): Array<number | 'gap'> {
-    const total = this.pageData()?.info.pages ?? 1;
-    const current = this.filters().page;
-    if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
-
-    const items: Array<number | 'gap'> = [1];
-    const start = Math.max(2, current - 1);
-    const end = Math.min(total - 1, current + 1);
-    if (start > 2) items.push('gap');
-    for (let page = start; page <= end; page += 1) items.push(page);
-    if (end < total - 1) items.push('gap');
-    items.push(total);
-    return items;
-  }
-
-  protected rangeStart(): number {
-    const count = this.pageData()?.results.length ?? 0;
-    if (count === 0) return 0;
-    return (this.filters().page - 1) * 20 + 1;
-  }
-
-  protected rangeEnd(): number {
-    return this.rangeStart() + (this.pageData()?.results.length ?? 1) - 1;
   }
 
   protected reload(): void {
@@ -198,6 +213,10 @@ export class CharacterList {
 
   private applyQuery(query: CharacterQuery): void {
     this.filters.set(query);
+    this.visibleCount.set(VISIBLE_STEP);
+    this.scrollMark = 0;
+    if (this.hasAppliedQuery) window.scrollTo({ top: 0 });
+    this.hasAppliedQuery = true;
     const draft = this.nameDraft().trim();
     if (this.nameEditInFlight) {
       if (draft === query.name) this.nameEditInFlight = false;

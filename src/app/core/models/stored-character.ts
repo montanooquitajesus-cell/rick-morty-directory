@@ -76,15 +76,11 @@ export function toLocation(stored: StoredCharacter): Location | null {
   };
 }
 
-export function toCharacterPage(characters: readonly StoredCharacter[], page: number): CharacterPage {
-  const pageSize = 20;
+export function toCharacterPage(characters: readonly StoredCharacter[]): CharacterPage {
   const count = characters.length;
-  const pages = count === 0 ? 0 : Math.ceil(count / pageSize);
-  const safePage = pages === 0 ? 1 : Math.min(page, pages);
-  const start = (safePage - 1) * pageSize;
 
   return {
-    info: { count, pages, next: null, prev: null },
-    results: characters.slice(start, start + pageSize).map(toCharacter),
+    info: { count, pages: 0, next: null, prev: null },
+    results: characters.map(toCharacter),
   };
 }

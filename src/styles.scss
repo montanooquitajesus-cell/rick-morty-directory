@@ -346,8 +346,15 @@ app-favorite-button { display: contents; }
 .status-dot[data-status='Dead'] { background: var(--dead); }
 .status[data-status='unknown'] { color: var(--unknown); }
 
-.pagination { display: flex; flex-wrap: wrap; gap: 0.35rem; justify-content: flex-end; }
-.pagination span { padding: 0.55rem 0.2rem; color: var(--muted); }
+.load-more {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.load-more p { color: var(--muted); }
 
 .detail { display: grid; gap: 1rem; }
 
@@ -451,8 +458,7 @@ app-favorite-button { display: contents; }
   .facts div,
   .location-stats,
   .results-bar,
-  .pager { grid-template-columns: 1fr; display: grid; }
+  .load-more { grid-template-columns: 1fr; display: grid; }
 
   .site-header { align-items: flex-start; }
-  .pagination { justify-content: flex-start; }
 }

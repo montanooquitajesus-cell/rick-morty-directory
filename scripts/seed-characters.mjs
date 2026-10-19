@@ -11,7 +11,8 @@ const firebaseConfig = {
 };
 
 const API_URL = 'https://rickandmortyapi.com/api';
-const PAGE_SIZE = 20;
+// La página 1 (ids 1-20) ya está guardada. Esta corrida agrega la página 2 (ids 21-40).
+const PAGES = [2];
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -19,9 +20,17 @@ const db = getFirestore(app);
 const locationCache = new Map();
 
 async function readJson(url) {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`No se pudo leer ${url} (${response.status})`);
-  return response.json();
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    const response = await fetch(url);
+    if (response.status === 429) {
+      await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+      continue;
+    }
+    if (!response.ok) throw new Error(`No se pudo leer ${url} (${response.status})`);
+    return response.json();
+  }
+
+  throw new Error(`No se pudo leer ${url} (429)`);
 }
 
 function resourceId(url) {
@@ -71,17 +80,19 @@ function toStoredCharacter(character, episodes, location) {
   };
 }
 
-const page = await readJson(`${API_URL}/character?page=1`);
-const characters = page.results.slice(0, PAGE_SIZE);
 const stored = [];
 
-for (const character of characters) {
-  const [episodes, location] = await Promise.all([
-    readEpisodes(character.episode ?? []),
-    readLocation(character.location?.url),
-  ]);
-  stored.push(toStoredCharacter(character, episodes, location));
-  console.log(`Preparado ${character.id} ${character.name}`);
+for (const pageNumber of PAGES) {
+  const page = await readJson(`${API_URL}/character?page=${pageNumber}`);
+  for (const character of page.results) {
+    const [episodes, location] = await Promise.all([
+      readEpisodes(character.episode ?? []),
+      readLocation(character.location?.url),
+    ]);
+    stored.push(toStoredCharacter(character, episodes, location));
+    console.log(`Preparado ${character.id} ${character.name}`);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
 }
 
 const batch = writeBatch(db);

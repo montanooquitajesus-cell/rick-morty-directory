@@ -27,7 +27,7 @@ export class CatalogService {
       return true;
     });
 
-    return toCharacterPage(filtered, filters.page);
+    return toCharacterPage(filtered);
   }
 
   async getDetail(id: number): Promise<CatalogDetail | null> {
