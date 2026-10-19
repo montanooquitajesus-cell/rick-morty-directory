@@ -1,5 +1,5 @@
 import { convertToParamMap } from '@angular/router';
-import { characterQueryFromParams } from './character-query';
+import { characterQueryFromParams, sanitizeNameQuery } from './character-query';
 
 describe('characterQueryFromParams', () => {
   it('uses defaults when the query is empty', () => {
@@ -29,6 +29,19 @@ describe('characterQueryFromParams', () => {
       page: '0',
     }))).toEqual({
       name: '',
+      status: '',
+      species: '',
+      page: 1,
+    });
+  });
+
+  it('drops symbols from the name and ignores an unknown species', () => {
+    expect(sanitizeNameQuery("Beth's <script>; DROP")).toBe("Beth's script DROP");
+    expect(characterQueryFromParams(convertToParamMap({
+      name: "Rick';--",
+      species: "Human' OR 1=1",
+    }))).toEqual({
+      name: "Rick'--",
       status: '',
       species: '',
       page: 1,

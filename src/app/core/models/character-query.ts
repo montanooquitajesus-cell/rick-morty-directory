@@ -1,5 +1,6 @@
 import { ParamMap } from '@angular/router';
 import { CharacterStatus } from './character';
+import { isKnownSpecies } from './labels';
 
 export interface CharacterQuery {
   name: string;
@@ -10,14 +11,19 @@ export interface CharacterQuery {
 
 const STATUSES = new Set<CharacterStatus>(['Alive', 'Dead', 'unknown']);
 
+export function sanitizeNameQuery(value: string): string {
+  return value.replace(/[^\p{L}\p{N}\s.'-]/gu, '');
+}
+
 export function characterQueryFromParams(params: ParamMap): CharacterQuery {
   const status = params.get('status') ?? '';
+  const species = params.get('species') ?? '';
   const page = Number(params.get('page') ?? '1');
 
   return {
-    name: (params.get('name') ?? '').trim(),
+    name: sanitizeNameQuery(params.get('name') ?? '').trim(),
     status: isCharacterStatus(status) ? status : '',
-    species: params.get('species') ?? '',
+    species: isKnownSpecies(species) ? species : '',
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
 }

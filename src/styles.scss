@@ -236,12 +236,15 @@ app-favorite-button { display: contents; }
   position: absolute;
   top: 0.65rem;
   right: 0.65rem;
-  width: 2.3rem;
-  min-height: 2.3rem;
+  z-index: 1;
+  width: 2.15rem;
+  min-height: 2.15rem;
   padding: 0;
   justify-content: center;
+  border: 0;
   border-radius: 50%;
-  background: color-mix(in srgb, var(--bg) 78%, transparent);
+  color: #f4f7f2;
+  background: rgb(12 16 14 / 72%);
 }
 
 .banner,
@@ -286,7 +289,7 @@ app-favorite-button { display: contents; }
 
 .character-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 0.9rem;
   margin: 0.4rem 0 0;
   padding: 0;
@@ -296,22 +299,19 @@ app-favorite-button { display: contents; }
 .character-grid.is-list { grid-template-columns: 1fr; }
 
 .character-card {
-  position: relative;
   display: grid;
+  align-content: start;
   gap: 0.7rem;
   height: 100%;
-  padding: 0.7rem;
+  padding: 0.7rem 0.75rem 0.9rem;
   background: var(--bg-raised);
   border: 1px solid var(--line);
-  border-radius: 1rem;
+  border-radius: 1.15rem;
 }
 
-.character-grid.is-list .character-card {
-  grid-template-columns: 5.5rem 1fr;
-  align-items: center;
-}
+.character-card-media { position: relative; }
 
-.character-card-media { display: block; }
+.character-card-photo { display: block; }
 
 .character-card img,
 .detail-portrait {
@@ -319,31 +319,117 @@ app-favorite-button { display: contents; }
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 0.75rem;
-  background: #0c100e;
+  border-radius: 0.9rem;
+  background: #141a16;
 }
 
-.character-grid.is-list .character-card img { width: 5.5rem; }
+.character-card-title,
+.character-card-body a.character-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--text);
+  text-decoration: none;
+}
 
-.character-card h2 { font-size: 1.05rem; }
-.character-card h2 a { color: inherit; text-decoration: none; }
-.character-card p { margin: 0.15rem 0; }
+.character-card h2 {
+  font-size: 1.2rem;
+  line-height: 1.2;
+}
+
+.character-card-title svg {
+  width: 1.15rem;
+  height: 1.15rem;
+  flex: none;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.character-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.18rem 0.6rem 0.18rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--unknown) 18%, transparent);
+  color: var(--unknown);
+  font-weight: 700;
+}
+
+.status-pill[data-status='Alive'] {
+  background: color-mix(in srgb, var(--alive) 18%, transparent);
+  color: var(--alive);
+}
+
+.status-pill[data-status='Dead'] {
+  background: color-mix(in srgb, var(--dead) 18%, transparent);
+  color: var(--dead);
+}
+
+.meta-rule {
+  width: 1px;
+  align-self: stretch;
+  background: var(--line);
+}
+
+.species-label,
+.card-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.species-label svg,
+.card-location svg {
+  width: 1rem;
+  height: 1rem;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.card-location {
+  margin: 0;
+  color: var(--muted);
+}
+
+.character-card-body { display: grid; gap: 0.55rem; min-width: 0; }
+
+.character-grid.is-list .character-card {
+  grid-template-columns: 7.5rem 1fr;
+  column-gap: 0.9rem;
+  align-items: center;
+}
+
+.character-grid.is-list .character-card-title { justify-content: flex-start; }
 
 .status-dot {
   display: inline-block;
   width: 0.5rem;
   height: 0.5rem;
-  margin-right: 0.25rem;
   border-radius: 50%;
-  background: var(--unknown);
+  background: currentColor;
 }
 
-.status-dot[data-status='Alive'],
 .status[data-status='Alive'] { color: var(--alive); }
-.status-dot[data-status='Alive'] { background: var(--alive); }
-.status-dot[data-status='Dead'],
 .status[data-status='Dead'] { color: var(--dead); }
-.status-dot[data-status='Dead'] { background: var(--dead); }
 .status[data-status='unknown'] { color: var(--unknown); }
 
 .load-more {

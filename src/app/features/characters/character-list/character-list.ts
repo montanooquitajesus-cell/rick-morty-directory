@@ -19,7 +19,7 @@ import {
   tap,
 } from 'rxjs';
 import { CharacterPage } from '../../../core/models/character';
-import { CharacterQuery, characterQueryFromParams } from '../../../core/models/character-query';
+import { CharacterQuery, characterQueryFromParams, sanitizeNameQuery } from '../../../core/models/character-query';
 import { SPECIES_OPTIONS, STATUS_OPTIONS, isKnownSpecies } from '../../../core/models/labels';
 import { CatalogService } from '../../../core/services/catalog';
 import { FavoritesState } from '../../../core/state/favorites-state';
@@ -161,7 +161,11 @@ export class CharacterList {
   }
 
   protected onNameInput(event: Event): void {
-    const value = event.target instanceof HTMLInputElement ? event.target.value : '';
+    const raw = event.target instanceof HTMLInputElement ? event.target.value : '';
+    const value = sanitizeNameQuery(raw);
+    if (event.target instanceof HTMLInputElement && event.target.value !== value) {
+      event.target.value = value;
+    }
     this.nameDraft.set(value);
     this.nameEditInFlight = true;
     this.nameChanges.next(value.trim());
@@ -176,6 +180,7 @@ export class CharacterList {
 
   protected onSpeciesChange(event: Event): void {
     const value = event.target instanceof HTMLSelectElement ? event.target.value : '';
+    if (value !== '' && !this.isKnownSpecies(value)) return;
     if (value === this.filters().species) return;
     this.queueQuery({ species: value, page: 1 });
   }

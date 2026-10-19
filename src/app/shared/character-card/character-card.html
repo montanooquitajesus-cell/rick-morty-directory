@@ -1,22 +1,50 @@
 <article class="character-card">
-  <a class="character-card-media" [routerLink]="['/characters', character().id]">
-    <img [src]="character().image" alt="" width="300" height="300" />
-  </a>
-  <app-favorite-button
-    variant="icon"
-    [characterName]="character().name"
-    [isFavorite]="favorites.isFavorite(character().id)"
-    [isPending]="favorites.isPending(character().id)"
-    (toggleFavorite)="favorites.toggle(character().id)"
-  />
+  <div class="character-card-media">
+    <a
+      class="character-card-photo"
+      [routerLink]="['/characters', character().id]"
+      [attr.aria-label]="'Ver ficha de ' + character().name"
+    >
+      <img [src]="character().image" alt="" width="300" height="300" />
+    </a>
+    <app-favorite-button
+      variant="icon"
+      [characterName]="character().name"
+      [isFavorite]="favorites.isFavorite(character().id)"
+      [isPending]="favorites.isPending(character().id)"
+      (toggleFavorite)="favorites.toggle(character().id)"
+    />
+  </div>
+
   <div class="character-card-body">
-    <h2>
-      <a [routerLink]="['/characters', character().id]">{{ character().name }}</a>
-    </h2>
-    <p>
-      <span class="status-dot" [attr.data-status]="character().status"></span>
-      {{ statusLabel(character().status) }} · {{ speciesLabel(character().species) }}
+    <a class="character-card-title" [routerLink]="['/characters', character().id]">
+      <h2>{{ character().name }}</h2>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M9 6.5 15 12l-6 5.5" />
+      </svg>
+    </a>
+
+    <div class="character-card-meta">
+      <span class="status-pill" [attr.data-status]="character().status">
+        <span class="status-dot"></span>
+        {{ statusLabel(character().status) }}
+      </span>
+      <span class="meta-rule" aria-hidden="true"></span>
+      <span class="species-label">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="8" r="3.2" />
+          <path d="M5.5 19.2c1.4-3 3.7-4.4 6.5-4.4s5.1 1.4 6.5 4.4" />
+        </svg>
+        {{ speciesLabel(character().species) }}
+      </span>
+    </div>
+
+    <p class="card-location">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 21s6-5.2 6-10a6 6 0 1 0-12 0c0 4.8 6 10 6 10z" />
+        <circle cx="12" cy="11" r="2.1" />
+      </svg>
+      {{ placeLabel(character().location.name) }}
     </p>
-    <p class="card-location">{{ placeLabel(character().location.name) }}</p>
   </div>
 </article>
