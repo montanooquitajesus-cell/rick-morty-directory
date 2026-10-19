@@ -168,9 +168,11 @@ La configuración web de Firebase está en el cliente. Es la clave pública del 
 
 ## Accesibilidad
 
--Interfaz en español. 
--Controles con nombre accesible (búsqueda, estado, especie, corazón, compartir). 
--El botón de corazón expone `aria-pressed`. Carga, vacío y error usan regiones de estado o alerta. El foco visible sigue el contraste de la interfaz oscura. La ficha se recorre con teclado por enlaces y botones.
+- Interfaz en español. 
+- Controles con nombre accesible (búsqueda, estado, especie, corazón, compartir). 
+- El botón de corazón expone `aria-pressed`. Carga, vacío y error usan regiones de estado o alerta. El foco visible sigue el contraste de la interfaz oscura. La ficha se recorre con teclado por enlaces y botones.
+- Vistas separadas para no mostrar modals y tener un mejor control de la información de cada personaje en una vista exclusiva para cada uno.
+- Feature de vistas responsivas para visualizar la aplicación web tanto en dispositivos móviles como en PC, o los que requiera el usuario
 
 ## Uso de IA
 
@@ -181,6 +183,8 @@ La configuración web de Firebase está en el cliente. Es la clave pública del 
 - El riesgo principal era dejar escrituras abiertas con la clave pública. Se mitigó con un esquema estricto en `favorites` y `allow write: if false` en `characters` después de implementar los 40 registros.
 - Se usó el agente con el fin de hacer un script que tomará información y la insertara dentro de nuestra base de datos de Firebase Store, el proceso me hizo conseguir 20 agentes, pero después decidi incrementar el rango y hacer que el script trajerá 40 personajes para tener mas manejo de los datos
 - Uno de los riesgos con el script era que la app siguiera llamando a la API en cada visita. El seed corre una sola vez y `CatalogService` solo lee Firestore una vez implementados los registros.
+- Principales riesgos es no tener un buen diseño, ya que la IA hace diseños similares en general, puede resolver en minutos, pero no siempre serán los mejores diseños UX, para ello se requiere un poco mas de tiempo para poder dar un producto limpio 
+- Otro principal riesgo es que el código puede ser confuso de vez en cuando si no se especifica bien, en este caso es poco probable ya que se especificó exactamente lo que se quería pero ciertos agentes pueden destruir lineas de código que ya funcionan por intentar crear algo mas, no es invulnerable a que transcurran eventos así.
 
 - Algunos de los prompts de trabajo empleados:
 
