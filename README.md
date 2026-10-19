@@ -71,13 +71,15 @@ Para volver a sembrar el catálogo hay que abrir temporalmente `create` y `updat
 Angular 22, componentes standalone, signals y OnPush. Firebase JS v13 modular.
 Para este proyecto se utilizó Angular 22, uso de componentes standalone, signas y OnPush. Se implementó Firebase JS v13 modular.
 
-La arquitectura elegida en base a la experiencia adquirida por otros proyectos  y las mejoras practicas fue la siguiente: 
+La arquitectura elegida en base a la experiencia adquirida por otros proyectos y las mejores prácticas fue la siguiente:
+
+```text
 src/app
-  core/models        tipos, etiquetas en español y mapeo del documento guardado
-  core/services      Firebase, catálogo y favoritos
-  core/state         estado de favoritos en signals
+  core/models          tipos, etiquetas en español y mapeo del documento guardado
+  core/services        Firebase, catálogo y favoritos
+  core/state           estado de favoritos en signals
   features/characters  lista, detalle y favoritos (rutas lazy)
-  shared             tarjeta y botón de favorito
+  shared               tarjeta y botón de favorito
 ```
 
 Para las rutas, elegimos la siguiente configuración:
@@ -154,6 +156,7 @@ La configuración web de Firebase está en el cliente. Es la clave pública del 
 - Los filtros comparan texto ya cargado. No se arma una consulta libre contra la base.
 - No hay secretos de Admin ni cuentas de servicio en el repo.
 - Absolutamente todos los inputs y selects (de ser posible) ya no admiten simbolos ni caracteres especiales esto con el fin de evitar inyecciones SQL que en este caso posiblemente no apliquen, pero es una norma en general y un estandar que manejo en todos mis proyectos, proteger todos los selects e inputs desde que son creados.
+- Se decidió dejar los archivos environment de Angular para este proyecto subidos en el repo, ya que la protección real está en firebase.rules. Estos archivos se dejan con el fin de quien clone dentro del equipo de developers pueda correr la app sin problemas.
 
 ## Rendimiento
 
