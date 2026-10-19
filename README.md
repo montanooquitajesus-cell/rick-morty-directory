@@ -1,3 +1,4 @@
+Desarrollado por Jesus Antonio Montaño Oquita:
 # Directorio Rick y Morty
 
 Directorio de personajes de la franquicia Rick & Morty, ordenado por sus personajes, episodios y localizaciones donde aparecieron.
