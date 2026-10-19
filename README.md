@@ -140,11 +140,11 @@ Las tres pantallas entran con `loadComponent`, así que el detalle y favoritos n
 
 ## Escalabilidad y mantenimiento
 
--Con 40 documentos, filtrar en memoria es suficiente y no pide índices, si el catálogo creciera, la consulta pasaría a Firestore where + limit,  el scroll infinito pediría el siguiente bloque al servidor.
--Capas separadas: modelos, servicios de datos, estado de favoritos y pantallas, cambiar la fuente del catalogo no hace necesario volver a generar las tarjetas.
--Como las imagenes son traidas directamente desde la api de Rick & Morty, habria que crear un storage después para guardar esas imagenes para no depender de recursos externos.
--Los modelos de los personajes siguen y respetan la forma de la API (url, created, episode como lista de strings) y el mapeo rellena varios de esos campos vacíos. Soltar esa forma obliga a tocar el modelo, el mapeo y las plantillas que leen origen, ubicación y episodios.
--El otro límite es que CatalogService baja los 40 documentos y filtra en memoria. Pasar el filtro y el scroll infinito a consultas de servidor cambia ese servicio y el corte de 10 en 10 de la lista. La ficha no se entera si getDetail sigue devolviendo personaje, episodios, ubicación y vecinos.
+- Con 40 documentos, filtrar en memoria es suficiente y no pide índices, si el catálogo creciera, la consulta pasaría a Firestore where + limit,  el scroll infinito pediría el siguiente bloque al servidor.
+- Capas separadas: modelos, servicios de datos, estado de favoritos y pantallas, cambiar la fuente del catalogo no hace necesario volver a generar las tarjetas.
+- Como las imagenes son traidas directamente desde la api de Rick & Morty, habria que crear un storage después para guardar esas imagenes para no depender de recursos externos.
+- Los modelos de los personajes siguen y respetan la forma de la API (url, created, episode como lista de strings) y el mapeo rellena varios de esos campos vacíos. Soltar esa forma obliga a tocar el modelo, el mapeo y las plantillas que leen origen, ubicación y episodios.
+- El otro límite es que CatalogService baja los 40 documentos y filtra en memoria. Pasar el filtro y el scroll infinito a consultas de servidor cambia ese servicio y el corte de 10 en 10 de la lista. La ficha no se entera si getDetail sigue devolviendo personaje, episodios, ubicación y vecinos.
 
 ## Seguridad y validaciones
 
